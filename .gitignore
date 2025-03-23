@@ -1,1 +1,7 @@
+#Ingore virtual environment directories
+venv/
+env/
 WeatherAPIProjectVenv/
+
+#Ignore .env file
+.env
