@@ -1,16 +1,9 @@
-from flask import Flask, jsonify
-import requests
+from flask import Flask
 from functions.weather_service import Weather_service
-from dotenv import load_dotenv
-import os
-import redis
-import json
-from datetime import timedelta
-
-load_dotenv()
-
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/weather/current/<location>', methods = ["GET"])
 def get_weather_current(location: str):
