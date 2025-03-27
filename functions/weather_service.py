@@ -62,7 +62,7 @@ class Weather_service:
             "unitGroup" : "metric",
             "key" : self.__api_key,
             "include" : "hours",
-            "elements": "datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype"
+            "elements": "datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon"
         }
 
         try:
