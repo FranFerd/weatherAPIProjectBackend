@@ -61,13 +61,15 @@ class Weather_service:
         params = {
             "unitGroup" : "metric",
             "key" : self.__api_key,
-            "include" : "hours",
-            "elements": "datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon"
+            "include" : "hours,address",
+            "elements": "addres,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon",
+            "content-type" : "json",
+            "locationMode" : "single"
         }
 
         try:
             response = requests.get(url, params=params)
-            response.raise_for_status()
+            response.raise_for_status() 
             weather_data = response.json()
 
             today_hourly_weather = weather_data.get('days')[0]
@@ -76,3 +78,33 @@ class Weather_service:
             return jsonify(today_hourly_weather)
         except requests.exceptions.RequestException as e:
             return jsonify({"error" : str(e)}), 500
+        
+    def check_address(self):
+
+        redis_key = 'checkAddress' + self.location
+        cached_data = self._redis_client.get(redis_key)
+        if cached_data:
+            return json.loads(cached_data)
+        
+        url = f'{self.BASE_URL}/{self.location}'
+        params = {
+            "unitGroup" : "metric",
+            "key" : self.__api_key,
+            "include" : "address,resolvedAddress",
+            "elements": "addres,resolvedAddress",
+            "content-type" : "json",
+            "locationMode" : "single"
+        }
+
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status() 
+            weather_data = response.json()
+
+            today_hourly_weather = weather_data.get('address')
+            self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(today_hourly_weather))
+
+            return jsonify(today_hourly_weather)
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error" : str(e)}), 500
+            
