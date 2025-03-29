@@ -9,10 +9,13 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 30
 
+jwt = JWTManager(app)
 users = {
-    "admin" : "password123",
-    "user" : "simplepass"
+    "testuser": {
+        "password" : "testpass"
+    }
 }
 
 @app.route('/login', methods=["POST"])
@@ -23,7 +26,7 @@ def login():
     if not username or not password:
         return jsonify({"msg" : "Missing credentials"}), 400
     
-    if users.get('username') != password:
+    if username not in users or users[username]['password'] != password:
         return jsonify({"msg": "Bad credentials"}), 401
     
     access_token = create_access_token(identity=username)
