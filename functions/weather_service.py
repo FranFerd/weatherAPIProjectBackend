@@ -61,8 +61,8 @@ class Weather_service:
         params = {
             "unitGroup" : "metric",
             "key" : self.__api_key,
-            "include" : "hours,address",
-            "elements": "addres,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon",
+            "include" : "hours,resolvedAddress",
+            "elements": "address,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon,humidity,windspeedmean,uvindex,sunrise,sunset,pressure",
             "content-type" : "json",
             "locationMode" : "single"
         }
@@ -72,10 +72,9 @@ class Weather_service:
             response.raise_for_status() 
             weather_data = response.json()
 
-            today_hourly_weather = weather_data.get('days')[0]
-            self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(today_hourly_weather))
+            self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(weather_data))
 
-            return jsonify(today_hourly_weather)
+            return jsonify(weather_data)
         except requests.exceptions.RequestException as e:
             return jsonify({"error" : str(e)}), 500
         
@@ -101,10 +100,16 @@ class Weather_service:
             response.raise_for_status() 
             weather_data = response.json()
 
+            if not weather_data.get('address'):
+                return jsonify({"message" : "Incorrect location"}), 400
+
             today_hourly_weather = weather_data.get('address')
             self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(today_hourly_weather))
 
             return jsonify(today_hourly_weather)
+        except requests.exceptions.HTTPError as e:
+            return jsonify({"message" : "Incorrect location"}), 400
         except requests.exceptions.RequestException as e:
-            return jsonify({"error" : str(e)}), 500
+            return jsonify({"error" : str(e)}, {"message" : "Invalid location"}), 500
             
+
