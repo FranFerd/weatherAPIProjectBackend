@@ -40,49 +40,15 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@app.route('/weather/current/<location>', methods = ["GET"])
-def get_weather_current(location: str):
-    return Weather_service(location).get_weather_current()
-
-@app.route('/weather/today/hourly/<location>')
+@app.route('/weather/hourly/<location>')
 def get_weather_today_hourly(location: str):
     return Weather_service(location).get_weather_today_hourly()
 
-@app.route('/weather/today/hourly/check-address/<location>')
+@app.route('/weather/hourly/check-address/<location>')
 def check_address(location: str):
     return Weather_service(location).check_address()
 
-@app.route('/api/autocomplete')
-def autocomplete():
-    query = request.args.get('query').strip()
-    if not query:
-        return jsonify([])
-    
-    try:
-        response = requests.get(
-            'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/autocomplete',
-            params={
-                'query': query,
-                'key': API_KEY,  # Keep this server-side!
-                'contentType': 'json'
-            },
-            timeout=3
-        )
-        if response.status_code != 200:
-            return jsonify({
-                'error': 'Visual Crossing API error',
-                'status': response.status_code,
-                'message': response.text
-            }), 502
-            
-        data = response.json()
-        return jsonify(data.get('locations', []))
-        
-    except Exception as e:
-        return jsonify({
-            'error': 'Internal server error',
-            'details': str(e)
-        }), 500
+# @app.route('/weather/weekly/')
 
 
 if __name__ == '__main__':
