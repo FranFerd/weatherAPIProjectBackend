@@ -41,15 +41,12 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 @app.route('/weather/hourly/<location>')
-def get_weather_today_hourly(location: str):
-    return Weather_service(location).get_weather_today_hourly()
+def get_weather_hourly(location: str):
+    return Weather_service(location).get_weather_hourly()
 
 @app.route('/weather/hourly/check-address/<location>')
 def check_address(location: str):
     return Weather_service(location).check_address()
-
-# @app.route('/weather/weekly/')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -17,7 +17,7 @@ class Weather_service:
         self._redis_client = redis.Redis(host='localhost', port=6379, db=0)
         self.__api_key = os.getenv('API_KEY')
         
-    def get_weather_today_hourly(self):
+    def get_weather_hourly(self):
 
         redis_key = 'weatherHourly' + self.location
         cached_data = self._redis_client.get(redis_key)
@@ -29,21 +29,24 @@ class Weather_service:
             "unitGroup" : "metric",
             "key" : self.__api_key,
             "include" : "hours,resolvedAddress",
-            "elements": "address,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,precipprob,preciptype,icon,humidity,windspeedmean,uvindex,sunrise,sunset,pressure",
+            "elements": "address,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,preciptype,icon,humidity,windspeedmean,uvindex,sunrise,sunset",
             "content-type" : "json",
             "locationMode" : "single"
         }
 
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status() 
-            weather_data = response.json()
+        response = requests.get(url, params=params)
+        response.raise_for_status() 
+        weather_data_raw = response.json()
+        weather_data_refined = {
+            "address" : weather_data_raw.get("address"),
+            "resolvedAddress" : weather_data_raw.get("resolvedAddress"),
+            "days" : weather_data_raw.get("days")[:8]
+        }
 
-            self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(weather_data))
+        self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(weather_data_refined))
 
-            return jsonify(weather_data)
-        except requests.exceptions.RequestException as e:
-            return jsonify({"error" : str(e)}), 500
+        return weather_data_refined
+
         
     def check_address(self):
 
