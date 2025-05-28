@@ -17,7 +17,7 @@ class Weather_service:
         self._redis_client = redis.Redis(host='localhost', port=6379, db=0)
         self.__api_key = os.getenv('API_KEY')
         
-    def get_weather_hourly(self):
+    def get_weather_hourly(self, number_of_days):
 
         redis_key = 'weatherHourly' + self.location
         cached_data = self._redis_client.get(redis_key)
@@ -29,7 +29,7 @@ class Weather_service:
             "unitGroup" : "metric",
             "key" : self.__api_key,
             "include" : "hours,resolvedAddress",
-            "elements": "address,datetime,temp,feelslike,conditions,tempmax,tempmin,feelslikemax,feelslikemin,preciptype,icon,humidity,windspeedmean,uvindex,sunrise,sunset",
+            "elements": "address,datetime,temp,feelslike,conditions,preciptype,icon,humidity,windspeed,uvindex,sunrise,sunset",
             "content-type" : "json",
             "locationMode" : "single"
         }
@@ -40,7 +40,7 @@ class Weather_service:
         weather_data_refined = {
             "address" : weather_data_raw.get("address"),
             "resolvedAddress" : weather_data_raw.get("resolvedAddress"),
-            "days" : weather_data_raw.get("days")[:8]
+            "days" : weather_data_raw.get("days")[:number_of_days]
         }
 
         self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(weather_data_refined))
