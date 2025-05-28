@@ -40,9 +40,9 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@app.route('/weather/hourly/<location>')
-def get_weather_hourly(location: str):
-    return Weather_service(location).get_weather_hourly()
+@app.route('/weather/hourly/<location>/<int:number_of_days>')
+def get_weather_hourly(location: str, number_of_days: int):
+    return Weather_service(location).get_weather_hourly(number_of_days)
 
 @app.route('/weather/hourly/check-address/<location>')
 def check_address(location: str):
