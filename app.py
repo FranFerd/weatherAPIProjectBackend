@@ -48,8 +48,8 @@ def get_weather_hourly(location: str, number_of_days: int):
 @app.route('/weather/hourly/check-address/<location>')
 def check_address(location: str):
     try:
-        data = Weather_service(location).check_address()
-        return jsonify(data), 200
+        address = Weather_service(location).check_address()
+        return jsonify(address), 200
     except requests.exceptions.HTTPError as e:
         return jsonify({"message": "Incorrect location"}), 400
     except requests.exceptions.RequestException as e:
