@@ -21,6 +21,7 @@ class Weather_service:
 
         redis_key = 'weatherHourly' + self.location + str(number_of_days)
         cached_data = self._redis_client.get(redis_key)
+
         if cached_data:
             return json.loads(cached_data)
         
@@ -36,6 +37,7 @@ class Weather_service:
 
         response = requests.get(url, params=params)
         response.raise_for_status() 
+
         weather_data_raw = response.json()
         weather_data_refined = {
             "address" : weather_data_raw.get("address"),
@@ -43,15 +45,20 @@ class Weather_service:
             "days" : weather_data_raw.get("days")[:number_of_days]
         }
 
-        self._redis_client.setex(name=redis_key, time=timedelta(seconds=3600) ,value=json.dumps(weather_data_refined))
+        self._redis_client.setex(
+            name=redis_key,
+            time=timedelta(seconds=3600),
+            value=json.dumps(weather_data_refined)
+        )
 
-        return weather_data_refined
+        return {"weather_data": weather_data_refined}
 
         
     def check_address(self):
 
         redis_key = 'checkAddress' + self.location
         cached_data = self._redis_client.get(redis_key)
+
         if cached_data:
             return json.loads(cached_data)
         
@@ -60,26 +67,24 @@ class Weather_service:
             "unitGroup" : "metric",
             "key" : self.__api_key,
             "include" : "address,resolvedAddress",
-            "elements": "addres,resolvedAddress",
+            "elements": "address,resolvedAddress",
             "content-type" : "json",
             "locationMode" : "single"
         }
 
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status() 
-            weather_data = response.json()
+        response = requests.get(url, params=params)
+        response.raise_for_status() 
 
-            if not weather_data.get('address'):
-                return jsonify({"message" : "Incorrect location"}), 400
+        weather_data = response.json()
+        address = weather_data.get('address')
 
-            today_hourly_weather = weather_data.get('address')
-            self._redis_client.setex(name=redis_key, time=timedelta(seconds=10) ,value=json.dumps(today_hourly_weather))
+        if not address:
+            raise ValueError('Invalid address')
 
-            return jsonify(today_hourly_weather)
-        except requests.exceptions.HTTPError as e:
-            return jsonify({"message" : "Incorrect location"}), 400
-        except requests.exceptions.RequestException as e:
-            return jsonify({"error" : str(e)}, {"message" : "Invalid location"}), 500
-            
+        self._redis_client.setex(
+            name=redis_key, 
+            time=timedelta(seconds=3600),
+            value=json.dumps(address)
+        )
 
+        return {"address": address}
