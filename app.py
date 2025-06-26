@@ -42,11 +42,18 @@ def protected():
 
 @app.route('/weather/hourly/<location>/<int:number_of_days>')
 def get_weather_hourly(location: str, number_of_days: int):
-    return Weather_service(location).get_weather_hourly(number_of_days)
+    data = Weather_service(location).get_weather_hourly(number_of_days)
+    return jsonify(data), 200
 
 @app.route('/weather/hourly/check-address/<location>')
 def check_address(location: str):
-    return Weather_service(location).check_address()
+    try:
+        data = Weather_service(location).check_address()
+        return jsonify(data), 200
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"message": "Incorrect location"}), 400
+    except requests.exceptions.RequestException as e:
+        return jsonify({ "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
